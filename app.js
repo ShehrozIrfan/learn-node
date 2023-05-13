@@ -1,12 +1,45 @@
 const http = require("http");
+const fs = require("fs");
 
 const server = http.createServer((req, res) => {
-  console.log(req);
-  // Event loop:
-  // Node uses a concept called event loop, actually it is a process that keeps on running as long as there are event listeners are registered. So, we registered the event createServer and it will keep running, actually node is single threaded. And this event loop help it to listen of hundred of thousands of requests.
+  const url = req.url;
+  const req_method = req.method;
 
-  // we can unregister the event, with hard exit.
-  // process.exit();
+  if (url === "/") {
+    res.setHeader("Content-Type", "text/html");
+    res.write("<title>");
+    res.write("<title>Message</title>");
+    res.write("<body>");
+    res.write(
+      "<form action='/message' method='POST'><input type='text' name='message' /><button type='submit'>Send</button></form>"
+    );
+    res.write("</body>");
+    res.write("</html>");
+
+    return res.end();
+  }
+
+  if (url === "/message" && req_method === "POST") {
+    const data = [];
+
+    req.on("data", (chunk) => {
+      console.log(chunk);
+      data.push(chunk);
+    });
+
+    req.on("end", () => {
+      const parsedData = Buffer.concat(data).toString();
+      console.log(parsedData);
+      const message = parsedData.split("=")[1];
+
+      fs.writeFileSync("message.txt", message);
+    });
+
+    res.statusCode = 302;
+    res.setHeader("Location", "/");
+
+    return res.end();
+  }
 
   res.setHeader("Content-Type", "text/html");
   res.write("<title>");
